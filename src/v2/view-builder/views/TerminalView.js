@@ -54,6 +54,8 @@ const Body = BaseForm.extend({
 
       messagesObjs.value
         .forEach(messagesObj => {
+          // To support intentional hard refresh in case of terminal states, clear sessionStorage to initiate a new login flow
+          sessionStorage.removeItem('stateTokenInUse');
           const msg = messagesObj.message;
           if (messagesObj.class === 'ERROR' || messagesObj.i18n?.key === RETURN_LINK_EXPIRED_KEY) {
             this.add(createCallout({
@@ -64,7 +66,6 @@ const Body = BaseForm.extend({
             this.add(`<p>${msg}</p>`, '.ion-messages-container');
           }
         });
-
     }
   },
 

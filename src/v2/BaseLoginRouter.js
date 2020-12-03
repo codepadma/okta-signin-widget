@@ -31,10 +31,14 @@ import AppState from './models/AppState';
 import idx from 'idx';
 
 const startLoginFlow = (settings) => {
+  let stateHandle = sessionStorage.getItem('stateTokenInUse');
+  //this may never execute, but to be on safer side will keep it.
+  if (!stateHandle) {
+    stateHandle = settings.get('stateToken');
+  }
   const clientId = settings.get('clientId');
   const domain = settings.get('baseUrl');
   const scopes = settings.get('scopes');
-  const stateHandle = settings.get('stateToken');
   const redirectUri = settings.get('redirectUri');
   const version = settings.get('apiVersion');
 
@@ -149,6 +153,12 @@ export default Router.extend({
       uiSchemaTransformer,
       responseTransformer.bind({}, this.settings),
     )(idxResponse);
+
+    //On success flush sessionStorage, 'success' object in remediation signifies end of login flow
+    if(idxResponse.rawIdxState.success || idxResponse.rawIdxState.successWithInteractionCode) {
+      sessionStorage.removeItem('stateTokenInUse');
+    }
+
     this.appState.setIonResponse(ionResponse);
   },
 
@@ -207,6 +217,21 @@ export default Router.extend({
         });
     }
 
+    const renderSuccessCallback = (idxResp) => {
+      this.settings.unset('stateToken');
+      this.settings.unset('proxyIdxResponse');
+      this.settings.unset('useInteractionCodeFlow');
+      this.appState.trigger('remediationSuccess', idxResp);
+      this.render(Controller, options);
+    };
+
+    const renderErrorCallback = (errorResp) => {
+      this.settings.unset('stateToken');
+      this.settings.unset('useInteractionCodeFlow');
+      this.appState.trigger('remediationError', errorResp.error);
+      this.render(Controller, options);
+    };
+
     // introspect stateToken when widget is bootstrap with state token
     // and remove it from `settings` afterwards as IDX response always has
     // state token (which will be set into AppState)
@@ -214,18 +239,11 @@ export default Router.extend({
       const idxRespPromise = this.settings.get('proxyIdxResponse') ?
         handleProxyIdxResponse(this.settings) : startLoginFlow(this.settings);
       return idxRespPromise
-        .then(idxResp => {
-          this.settings.unset('stateToken');
-          this.settings.unset('proxyIdxResponse');
-          this.settings.unset('useInteractionCodeFlow');
-          this.appState.trigger('remediationSuccess', idxResp);
-          this.render(Controller, options);
-        })
+        .then(renderSuccessCallback)
         .catch(errorResp => {
-          this.settings.unset('stateToken');
-          this.settings.unset('useInteractionCodeFlow');
-          this.appState.trigger('remediationError', errorResp.error);
-          this.render(Controller, options);
+          // Try again if first introspect fails due to invalid token error, now with new token.
+          sessionStorage.setItem('stateTokenInUse', this.settings.get('stateToken'));
+          startLoginFlow(this.settings).then(renderSuccessCallback).catch(renderErrorCallback);
         });
     }
 
