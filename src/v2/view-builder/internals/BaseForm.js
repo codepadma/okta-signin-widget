@@ -18,6 +18,7 @@ export default Form.extend({
   modelEvents: {
     'clearFormError': 'handleClearFormError',
     'error': 'triggerAfterError',
+    'clearFormFieldsetContent': 'handleClearFormFieldsetContent'
   },
 
   initialize () {
@@ -38,6 +39,10 @@ export default Form.extend({
     if (this.$('.o-form-error-container').hasClass('o-form-has-errors')) {
       this.clearErrors();
     }
+  },
+
+  handleClearFormFieldsetContent () {
+    this.$el.find('.o-form-fieldset-container').empty();
   },
 
   triggerAfterError (model, error) {
