@@ -110,7 +110,7 @@ export default Controller.extend({
 
   handleInvokeAction (actionPath = '') {
     if(actionPath === 'cancel') {
-      sessionStorage.removeItem('stateTokenInUse');
+      sessionStorage.removeItem('widget-state-token');
     }
 
     const idx = this.options.appState.get('idx');
@@ -171,9 +171,10 @@ export default Controller.extend({
   },
 
   showFormErrors (model, error) {
-    // If errors are terminal errors, then clear session storage, so that intentional hard refersh initiate a new loginflow
+    // If errors are terminal errors, then clear session storage
+    // so that intentional hard refersh initiate a new loginflow
     if(error.messages) {
-      sessionStorage.removeItem('stateTokenInUse');
+      sessionStorage.removeItem('widget-state-token');
     }
     model.trigger('clearFormError');
     if (!error) {

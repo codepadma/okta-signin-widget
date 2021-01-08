@@ -140,12 +140,7 @@ var OktaSignIn = (function () {
         When you are ready to publish your app, embed the minified version to turn on production mode.
         See: https://developer.okta.com/code/javascript/okta_sign-in_widget#cdn
       `);
-
-    // Store state token to reuse in case of browser refresh.
-    if(!sessionStorage.getItem("stateTokenInUse")) {
-      sessionStorage.setItem("stateTokenInUse", options.stateToken);
-    }
-
+      
     var authParams = _.extend({
       clientId: options.clientId,
       redirectUri: options.redirectUri

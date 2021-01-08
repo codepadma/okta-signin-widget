@@ -50,12 +50,12 @@ const Body = BaseForm.extend({
   showMessages () {
     const messagesObjs = this.options.appState.get('messages');
     if (messagesObjs && Array.isArray(messagesObjs.value)) {
+      // To support intentional hard refresh in case of terminal states
+      // clear sessionStorage to initiate a new login flow
+      sessionStorage.removeItem('widget-state-token');
       this.add('<div class="ion-messages-container"></div>', '.o-form-error-container');
-
       messagesObjs.value
         .forEach(messagesObj => {
-          // To support intentional hard refresh in case of terminal states, clear sessionStorage to initiate a new login flow
-          sessionStorage.removeItem('stateTokenInUse');
           const msg = messagesObj.message;
           if (messagesObj.class === 'ERROR' || messagesObj.i18n?.key === RETURN_LINK_EXPIRED_KEY) {
             this.add(createCallout({

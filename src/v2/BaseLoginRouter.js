@@ -31,7 +31,7 @@ import AppState from './models/AppState';
 import idx from 'idx';
 
 const startLoginFlow = (settings) => {
-  let stateHandle = sessionStorage.getItem('stateTokenInUse');
+  let stateHandle = sessionStorage.getItem('widget-state-token');
   //this may never execute, but to be on safer side will keep it.
   if (!stateHandle) {
     stateHandle = settings.get('stateToken');
@@ -90,6 +90,11 @@ export default Router.extend({
   Events: Backbone.Events,
 
   initialize: function (options) {
+    // Store state token to reuse in case of browser refresh.
+    if(!sessionStorage.getItem('widget-state-token')) {
+      sessionStorage.setItem('widget-state-token', options.stateToken);
+    }
+
     // Create a default success and/or error handler if
     // one is not provided.
     if (!options.globalSuccessFn) {
@@ -156,7 +161,7 @@ export default Router.extend({
 
     //On success flush sessionStorage, 'success' object in remediation signifies end of login flow
     if(idxResponse.rawIdxState.success || idxResponse.rawIdxState.successWithInteractionCode) {
-      sessionStorage.removeItem('stateTokenInUse');
+      sessionStorage.removeItem('widget-state-token');
     }
 
     this.appState.setIonResponse(ionResponse);
@@ -217,33 +222,32 @@ export default Router.extend({
         });
     }
 
-    const renderSuccessCallback = (idxResp) => {
-      this.settings.unset('stateToken');
-      this.settings.unset('proxyIdxResponse');
-      this.settings.unset('useInteractionCodeFlow');
-      this.appState.trigger('remediationSuccess', idxResp);
+    // Remove stateToken and other attributes to sanitize settings object.
+    // IDX response always has stateToken, that will be set into AppState)
+    const renderCallback = (idxResp) => {
+      this.unsetAttributes();
+      if (!idxResp.error) {
+        this.appState.trigger('remediationSuccess', idxResp);
+      } else {
+        this.appState.trigger('remediationError', idxResp.error);
+      }
       this.render(Controller, options);
     };
 
-    const renderErrorCallback = (errorResp) => {
-      this.settings.unset('stateToken');
-      this.settings.unset('useInteractionCodeFlow');
-      this.appState.trigger('remediationError', errorResp.error);
-      this.render(Controller, options);
-    };
-
-    // introspect stateToken when widget is bootstrap with state token
-    // and remove it from `settings` afterwards as IDX response always has
-    // state token (which will be set into AppState)
+    // Start loginflow when widget is bootstrapped with stateToken
     if (this.settings.get('oieEnabled')) {
       const idxRespPromise = this.settings.get('proxyIdxResponse') ?
         handleProxyIdxResponse(this.settings) : startLoginFlow(this.settings);
       return idxRespPromise
-        .then(renderSuccessCallback)
+        .then(renderCallback)
         .catch(errorResp => {
-          // Try again if first introspect fails due to invalid token error, now with new token.
-          sessionStorage.setItem('stateTokenInUse', this.settings.get('stateToken'));
-          startLoginFlow(this.settings).then(renderSuccessCallback).catch(renderErrorCallback);
+          // If introspect fails with token in use, then try again with new stateToken fetched on refresh.
+          if(sessionStorage.getItem('widget-state-token') !== this.settings.get('stateToken')) {
+            sessionStorage.setItem('widget-state-token', this.settings.get('stateToken'));
+            startLoginFlow(this.settings).then(renderCallback);
+          } else {
+            renderCallback(errorResp);
+          }
         });
     }
 
@@ -269,6 +273,12 @@ export default Router.extend({
     this.listenTo(this.controller, 'all', this.trigger);
 
     this.controller.render();
+  },
+
+  unsetAttributes () {
+    this.settings.unset('stateToken');
+    this.settings.unset('useInteractionCodeFlow');
+    this.settings.unset('proxyIdxResponse');
   },
 
   hide: function () {
