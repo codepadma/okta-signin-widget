@@ -31,8 +31,7 @@ import AppState from './models/AppState';
 import idx from 'idx';
 
 const startLoginFlow = (settings) => {
-  let stateHandle = sessionStorage.getItem('widget-state-token');
-  //this may never execute, but to be on safer side will keep it.
+  let stateHandle = sessionStorage.getItem('okta-siw-state-token');
   if (!stateHandle) {
     stateHandle = settings.get('stateToken');
   }
@@ -90,11 +89,7 @@ export default Router.extend({
   Events: Backbone.Events,
 
   initialize: function (options) {
-    // Store state token to reuse in case of browser refresh.
-    if(!sessionStorage.getItem('widget-state-token')) {
-      sessionStorage.setItem('widget-state-token', options.stateToken);
-    }
-
+    this.updateStateHandleInStorage(options.stateToken);
     // Create a default success and/or error handler if
     // one is not provided.
     if (!options.globalSuccessFn) {
@@ -161,7 +156,7 @@ export default Router.extend({
 
     //On success flush sessionStorage, 'success' object in remediation signifies end of login flow
     if(idxResponse.rawIdxState.success || idxResponse.rawIdxState.successWithInteractionCode) {
-      sessionStorage.removeItem('widget-state-token');
+      sessionStorage.removeItem('okta-siw-state-token');
     }
 
     this.appState.setIonResponse(ionResponse);
@@ -227,6 +222,8 @@ export default Router.extend({
     const renderCallback = (idxResp) => {
       this.unsetAttributes();
       if (!idxResp.error) {
+        // When interact flow is used, we need to set stateToken from idx response in session storage
+        this.updateStateHandleInStorage(idxResp.rawIdxState.stateHandle);
         this.appState.trigger('remediationSuccess', idxResp);
       } else {
         this.appState.trigger('remediationError', idxResp.error);
@@ -242,8 +239,8 @@ export default Router.extend({
         .then(renderCallback)
         .catch(errorResp => {
           // If introspect fails with token in use, then try again with new stateToken fetched on refresh.
-          if(sessionStorage.getItem('widget-state-token') !== this.settings.get('stateToken')) {
-            sessionStorage.setItem('widget-state-token', this.settings.get('stateToken'));
+          if(sessionStorage.getItem('okta-siw-state-token') !== this.settings.get('stateToken')) {
+            sessionStorage.setItem('okta-siw-state-token', this.settings.get('stateToken'));
             startLoginFlow(this.settings).then(renderCallback);
           } else {
             renderCallback(errorResp);
@@ -279,6 +276,12 @@ export default Router.extend({
     this.settings.unset('stateToken');
     this.settings.unset('useInteractionCodeFlow');
     this.settings.unset('proxyIdxResponse');
+  },
+
+  updateStateHandleInStorage (stateToken) {
+    if(!sessionStorage.getItem('okta-siw-state-token') && stateToken) {
+      sessionStorage.setItem('okta-siw-state-token', stateToken);
+    }
   },
 
   hide: function () {

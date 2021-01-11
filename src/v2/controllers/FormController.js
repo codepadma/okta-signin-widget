@@ -110,7 +110,7 @@ export default Controller.extend({
 
   handleInvokeAction (actionPath = '') {
     if(actionPath === 'cancel') {
-      sessionStorage.removeItem('widget-state-token');
+      sessionStorage.removeItem('okta-siw-state-token');
     }
 
     const idx = this.options.appState.get('idx');
@@ -174,7 +174,7 @@ export default Controller.extend({
     // If errors are terminal errors, then clear session storage
     // so that intentional hard refersh initiate a new loginflow
     if(error.messages) {
-      sessionStorage.removeItem('widget-state-token');
+      sessionStorage.removeItem('okta-siw-state-token');
     }
     model.trigger('clearFormError');
     if (!error) {

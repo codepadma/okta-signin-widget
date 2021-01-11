@@ -52,7 +52,7 @@ const Body = BaseForm.extend({
     if (messagesObjs && Array.isArray(messagesObjs.value)) {
       // To support intentional hard refresh in case of terminal states
       // clear sessionStorage to initiate a new login flow
-      sessionStorage.removeItem('widget-state-token');
+      sessionStorage.removeItem('okta-siw-state-token');
       this.add('<div class="ion-messages-container"></div>', '.o-form-error-container');
       messagesObjs.value
         .forEach(messagesObj => {
