@@ -1,11 +1,16 @@
 /*globals module, Promise */
 import _ from 'underscore';
+import { internal } from 'okta';
 import Errors from 'util/Errors';
 import OAuth2Util from 'util/OAuth2Util';
 import Util from 'util/Util';
 import createAuthClient from 'widget/createAuthClient';
 import V1Router from 'LoginRouter';
 import V2Router from 'v2/WidgetRouter';
+
+// Enable "autoComplete" attribute
+const { FormUtil } = internal.views.forms.helpers;
+FormUtil.INPUT_OPTIONS.push('autoComplete');
 
 var OktaSignIn = (function () {
 

@@ -11,34 +11,21 @@
  */
 
 //note: not including Okta here and explicitly including jquery and Handlebars
-//because we want to be explicit about which TextBox we are extending here
+//because we want to be explicit about which PasswordBox we are extending here
 //and want to avoid the cirucular dependency that occurs if we
 //include Okta
 import { internal } from 'okta';
 import 'qtip';
-import BrowserFeatures from 'util/BrowserFeatures';
-const { TextBox } = internal.views.forms.inputs;
-export default TextBox.extend({
+const { PasswordBox } = internal.views.forms.inputs;
+export default PasswordBox.extend({
   postRender: function () {
     const input = this.$('input');
     const attrs = {};
-    const { type, autoComplete } = this.options;
-    if (type === 'number') {
-      attrs.pattern = '[0-9]*';
-      attrs.inputmode = 'numeric';
-    }
+    const { autoComplete } = this.options;
     if (autoComplete) {
       attrs.autocomplete = autoComplete;
     }
     input.attr(attrs);
-    TextBox.prototype.postRender.apply(this, arguments);
-  },
-  // Override the focus() to ignore focus in IE. IE (8-11) has a known bug where
-  // the placeholder text disappears when the input field is focused.
-  focus: function () {
-    if (BrowserFeatures.isIE()) {
-      return;
-    }
-    return TextBox.prototype.focus.apply(this, arguments);
-  },
+    PasswordBox.prototype.postRender.apply(this, arguments);
+  }
 });
