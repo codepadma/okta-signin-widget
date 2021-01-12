@@ -13,6 +13,7 @@ import { _, Controller } from 'okta';
 import ViewFactory from '../view-builder/ViewFactory';
 import IonResponseHelper from '../ion/IonResponseHelper';
 import { getV1ClassName } from '../ion/ViewClassNamesFactory';
+import { OKTA_STATE_TOKEN_KEY } from '../view-builder/utils/Constants';
 
 export default Controller.extend({
   className: 'form-controller',
@@ -110,7 +111,7 @@ export default Controller.extend({
 
   handleInvokeAction (actionPath = '') {
     if(actionPath === 'cancel') {
-      sessionStorage.removeItem('okta-siw-state-token');
+      sessionStorage.removeItem(OKTA_STATE_TOKEN_KEY);
     }
 
     const idx = this.options.appState.get('idx');
@@ -171,11 +172,6 @@ export default Controller.extend({
   },
 
   showFormErrors (model, error) {
-    // If errors are terminal errors, then clear session storage
-    // so that intentional hard refersh initiate a new loginflow
-    if(error.messages) {
-      sessionStorage.removeItem('okta-siw-state-token');
-    }
     model.trigger('clearFormError');
     if (!error) {
       error = 'FormController - unknown error found';

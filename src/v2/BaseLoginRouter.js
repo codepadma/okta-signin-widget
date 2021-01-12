@@ -29,9 +29,10 @@ import uiSchemaTransformer from './ion/uiSchemaTransformer';
 import i18nTransformer from './ion/i18nTransformer';
 import AppState from './models/AppState';
 import idx from 'idx';
+import { OKTA_STATE_TOKEN_KEY } from './view-builder/utils/Constants';
 
 const startLoginFlow = (settings) => {
-  let stateHandle = sessionStorage.getItem('okta-siw-state-token');
+  let stateHandle = sessionStorage.getItem(OKTA_STATE_TOKEN_KEY);
   if (!stateHandle) {
     stateHandle = settings.get('stateToken');
   }
@@ -156,7 +157,7 @@ export default Router.extend({
 
     //On success flush sessionStorage, 'success' object in remediation signifies end of login flow
     if(idxResponse.rawIdxState.success || idxResponse.rawIdxState.successWithInteractionCode) {
-      sessionStorage.removeItem('okta-siw-state-token');
+      sessionStorage.removeItem(OKTA_STATE_TOKEN_KEY);
     }
 
     this.appState.setIonResponse(ionResponse);
@@ -239,8 +240,8 @@ export default Router.extend({
         .then(renderCallback)
         .catch(errorResp => {
           // If introspect fails with token in use, then try again with new stateToken fetched on refresh.
-          if(sessionStorage.getItem('okta-siw-state-token') !== this.settings.get('stateToken')) {
-            sessionStorage.setItem('okta-siw-state-token', this.settings.get('stateToken'));
+          if(sessionStorage.getItem(OKTA_STATE_TOKEN_KEY) !== this.settings.get('stateToken')) {
+            sessionStorage.setItem(OKTA_STATE_TOKEN_KEY, this.settings.get('stateToken'));
             startLoginFlow(this.settings).then(renderCallback);
           } else {
             renderCallback(errorResp);
@@ -279,8 +280,8 @@ export default Router.extend({
   },
 
   updateStateHandleInStorage (stateToken) {
-    if(!sessionStorage.getItem('okta-siw-state-token') && stateToken) {
-      sessionStorage.setItem('okta-siw-state-token', stateToken);
+    if(!sessionStorage.getItem(OKTA_STATE_TOKEN_KEY) && stateToken) {
+      sessionStorage.setItem(OKTA_STATE_TOKEN_KEY, stateToken);
     }
   },
 

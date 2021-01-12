@@ -140,7 +140,7 @@ var OktaSignIn = (function () {
         When you are ready to publish your app, embed the minified version to turn on production mode.
         See: https://developer.okta.com/code/javascript/okta_sign-in_widget#cdn
       `);
-      
+
     var authParams = _.extend({
       clientId: options.clientId,
       redirectUri: options.redirectUri

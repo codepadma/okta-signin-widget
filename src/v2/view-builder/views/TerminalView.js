@@ -6,6 +6,7 @@ import BaseHeader from '../internals/BaseHeader';
 import HeaderBeacon from '../components/HeaderBeacon';
 import { getBackToSignInLink, getSkipSetupLink } from '../utils/LinksUtil';
 import { getIconClassNameForBeacon } from '../utils/AuthenticatorUtil';
+import { OKTA_STATE_TOKEN_KEY } from '../../view-builder/utils/Constants';
 
 const RETURN_LINK_EXPIRED_KEY = 'idx.return.link.expired';
 const SAFE_MODE_KEY_PREFIX = 'idx.error.server.safe.mode';
@@ -50,9 +51,6 @@ const Body = BaseForm.extend({
   showMessages () {
     const messagesObjs = this.options.appState.get('messages');
     if (messagesObjs && Array.isArray(messagesObjs.value)) {
-      // To support intentional hard refresh in case of terminal states
-      // clear sessionStorage to initiate a new login flow
-      sessionStorage.removeItem('okta-siw-state-token');
       this.add('<div class="ion-messages-container"></div>', '.o-form-error-container');
       messagesObjs.value
         .forEach(messagesObj => {
@@ -87,5 +85,8 @@ export default BaseView.extend({
     HeaderBeacon: HeaderBeaconTerminal,
   }),
   Body,
-  Footer
+  Footer,
+  postRender () {
+    sessionStorage.removeItem(OKTA_STATE_TOKEN_KEY);
+  }
 });
